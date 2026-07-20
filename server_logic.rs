@@ -4,15 +4,14 @@ use super::game_logic::*;
 
 // ======= State definitions =======
 
-
-/// Contains the history on the current round by listing the triks won by 
+/// Contains the history on the current round by listing the triks won by
 /// Odd and Even, the two opposed teams.
 struct PlayingHistory {
     odd: Vec<Trick>,
     even: Vec<Trick>,
 }
 
-/// A bid by a player 
+/// A bid by a player
 struct Bid {
     suit: Suit,
     val: u8,
@@ -38,7 +37,7 @@ struct PlayingState {
     is_playing: Player,
     history: PlayingHistory,
     table: Vec<Card>,
-    trump: Suit
+    trump: Suit,
 }
 
 /// If we are in the bidding phase, the round is described by this struct.
@@ -68,10 +67,7 @@ impl PlayingHistory {
 
 impl Score {
     fn new() -> Self {
-        Score{
-            odd: 0,
-            even: 0,
-        }
+        Score { odd: 0, even: 0 }
     }
 }
 
@@ -109,7 +105,7 @@ impl PlayingState {
         let mut history;
         let mut table: Vec<_>;
         let trump = self.trump;
-        
+
         if self.table.len() < 3 {
             deck = self.deck;
             deck.delete_card(player, card);
@@ -117,18 +113,18 @@ impl PlayingState {
             history = self.history;
             table = self.table;
             table.push(card);
-        } else if self.table.len() == 3{
+        } else if self.table.len() == 3 {
             deck = self.deck;
             deck.delete_card(player, card);
             is_playing = (player + 1) % 4;
             history = self.history;
             table = self.table;
             table.push(card);
+        } else {
+            panic!("wtf not possible in table.len() matching")
         }
 
-        else { panic!("wtf not possible in table.len() matching") } 
-
-        return State::Playing(PlayingState { 
+        return State::Playing(PlayingState {
             deck,
             is_playing,
             history,
@@ -137,5 +133,3 @@ impl PlayingState {
         });
     }
 }
-
-
