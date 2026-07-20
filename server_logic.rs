@@ -28,10 +28,11 @@ struct Score {
 enum State {
     Initial,
     Over,
-    Playing(PlayingState, Score),
-    Bidding(BiddingState, Score),
+    Playing(PlayingState),
+    Bidding(BiddingState),
 }
 
+/// If we are in the play phase, the round is described by this struct.
 struct PlayingState {
     deck: Deck,
     is_playing: Player,
@@ -40,16 +41,18 @@ struct PlayingState {
     trump: Suit
 }
 
+/// If we are in the bidding phase, the round is described by this struct.
 struct BiddingState {
     deck: Deck,
     is_bidding: Player,
     bidding_history: Vec<Bid>,
 }
 
+/// A player can play or bid, (pass is None)
 enum PlayerAction {
     Nil,
     PlayCard { player: Player, card: Card },
-    Bid { player: Player, bid: Bid },
+    Bid { player: Player, bid: Option<Bid> },
 }
 
 // ------------- Impl --------------
@@ -73,15 +76,16 @@ impl Score {
 }
 
 impl State {
+    /// Simply see in which phase we are (among initial, biddin, playing) and call the right method.
     fn update(state: State, action: PlayerAction) -> State {
         match (state, action) {
             (State::Initial, PlayerAction::Nil) => State::Bidding(BiddingState {
                 deck: Deck::random_deck(),
                 is_bidding: 0,
                 bidding_history: vec![],
-            }, Score::new()),
-            (State::Playing(playing_state, score), PlayerAction::PlayCard { player, card }) => {
-                playing_state.update(player, card, score)
+            }),
+            (State::Playing(playing_state), PlayerAction::PlayCard { player, card }) => {
+                playing_state.update(player, card)
             }
             _ => todo!(),
         }
@@ -89,8 +93,8 @@ impl State {
 }
 
 impl PlayingState {
-    // Use the game's rules to assert that the card played is valid, then update the state
-    fn update(self, player: Player, card: Card, score: Score) -> State {
+    /// Ask the game logic what to do and update the state accordingly.
+    fn update(self, player: Player, card: Card) -> State {
         // Il manque une fonction qui prend une table, mon jeu, et qui me dit si
         // - J'ai le droit de jouer ContinueToPlay
         // - Qui remporte le pli Win(player)
@@ -130,7 +134,7 @@ impl PlayingState {
             history,
             table,
             trump,
-        }, score) 
+        });
     }
 }
 
