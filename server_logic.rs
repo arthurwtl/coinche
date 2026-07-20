@@ -1,0 +1,137 @@
+//! Contains the logic used by the server to update the state of the game.
+
+use super::game_logic::*;
+
+// ======= State definitions =======
+
+
+/// Contains the history on the current round by listing the triks won by 
+/// Odd and Even, the two opposed teams.
+struct PlayingHistory {
+    odd: Vec<Trick>,
+    even: Vec<Trick>,
+}
+
+/// A bid by a player 
+struct Bid {
+    suit: Suit,
+    val: u8,
+}
+
+// Current score of the party
+struct Score {
+    odd: u8,
+    even: u8,
+}
+
+/// All the logic for a sigle round.
+enum State {
+    Initial,
+    Over,
+    Playing(PlayingState, Score),
+    Bidding(BiddingState, Score),
+}
+
+struct PlayingState {
+    deck: Deck,
+    is_playing: Player,
+    history: PlayingHistory,
+    table: Vec<Card>,
+    trump: Suit
+}
+
+struct BiddingState {
+    deck: Deck,
+    is_bidding: Player,
+    bidding_history: Vec<Bid>,
+}
+
+enum PlayerAction {
+    Nil,
+    PlayCard { player: Player, card: Card },
+    Bid { player: Player, bid: Bid },
+}
+
+// ------------- Impl --------------
+
+impl PlayingHistory {
+    fn new() -> Self {
+        Self {
+            odd: vec![],
+            even: vec![],
+        }
+    }
+}
+
+impl Score {
+    fn new() -> Self {
+        Score{
+            odd: 0,
+            even: 0,
+        }
+    }
+}
+
+impl State {
+    fn update(state: State, action: PlayerAction) -> State {
+        match (state, action) {
+            (State::Initial, PlayerAction::Nil) => State::Bidding(BiddingState {
+                deck: Deck::random_deck(),
+                is_bidding: 0,
+                bidding_history: vec![],
+            }, Score::new()),
+            (State::Playing(playing_state, score), PlayerAction::PlayCard { player, card }) => {
+                playing_state.update(player, card, score)
+            }
+            _ => todo!(),
+        }
+    }
+}
+
+impl PlayingState {
+    // Use the game's rules to assert that the card played is valid, then update the state
+    fn update(self, player: Player, card: Card, score: Score) -> State {
+        // Il manque une fonction qui prend une table, mon jeu, et qui me dit si
+        // - J'ai le droit de jouer ContinueToPlay
+        // - Qui remporte le pli Win(player)
+        // - Illegal
+
+        // At this position we are shure the play is correct (not implemented) (attention anglais
+        // pas tip top)
+        //
+        // Code à réorganiser avec un match sur le resultat de l'appel à la logique du jeu
+        let mut deck;
+        let mut is_playing;
+        let mut history;
+        let mut table: Vec<_>;
+        let trump = self.trump;
+        
+        if self.table.len() < 3 {
+            deck = self.deck;
+            deck.delete_card(player, card);
+            is_playing = (player + 1) % 4;
+            history = self.history;
+            table = self.table;
+            table.push(card);
+        } else if self.table.len() == 3{
+            deck = self.deck;
+            deck.delete_card(player, card);
+            is_playing = (player + 1) % 4;
+            history = self.history;
+            table = self.table;
+            table.push(card);
+        }
+
+        else { panic!("wtf not possible in table.len() matching") } 
+
+        return State::Playing(PlayingState { 
+            deck,
+            is_playing,
+            history,
+            table,
+            trump,
+        }, score) 
+    }
+}
+
+
