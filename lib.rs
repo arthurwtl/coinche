@@ -1,6 +1,6 @@
-//! This library contains the game's whole logic.
-//! - The rules and basics definitions are in `game_logic`
-//! - The logic used by the server to update the state is in `server_logic`
+//! This library contains the game's logic.
+//! - `game_logic` : contains the rules and definitions for playing and biddings phases.
+//! - `server_logic` : contains the logic used by the server to update the state
 
 #![allow(dead_code)]
 

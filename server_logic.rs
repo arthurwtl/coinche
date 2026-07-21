@@ -23,8 +23,8 @@ struct Score {
     even: u8,
 }
 
-/// All the logic for a sigle round.
-enum State {
+/// All the logic for a single round.
+enum RoundState {
     Initial,
     Over,
     Playing(PlayingState),
@@ -71,16 +71,16 @@ impl Score {
     }
 }
 
-impl State {
+impl RoundState {
     /// Simply see in which phase we are (among initial, biddin, playing) and call the right method.
-    fn update(state: State, action: PlayerAction) -> State {
+    fn update(state: RoundState, action: PlayerAction) -> RoundState {
         match (state, action) {
-            (State::Initial, PlayerAction::Nil) => State::Bidding(BiddingState {
+            (RoundState::Initial, PlayerAction::Nil) => RoundState::Bidding(BiddingState {
                 deck: Deck::random_deck(),
                 is_bidding: 0,
                 bidding_history: vec![],
             }),
-            (State::Playing(playing_state), PlayerAction::PlayCard { player, card }) => {
+            (RoundState::Playing(playing_state), PlayerAction::PlayCard { player, card }) => {
                 playing_state.update(player, card)
             }
             _ => todo!(),
@@ -90,7 +90,7 @@ impl State {
 
 impl PlayingState {
     /// Ask the game logic what to do and update the state accordingly.
-    fn update(self, player: Player, card: Card) -> State {
+    fn update(self, player: Player, card: Card) -> RoundState {
         // Il manque une fonction qui prend une table, mon jeu, et qui me dit si
         // - J'ai le droit de jouer ContinueToPlay
         // - Qui remporte le pli Win(player)
@@ -124,7 +124,7 @@ impl PlayingState {
             panic!("wtf not possible in table.len() matching")
         }
 
-        return State::Playing(PlayingState {
+        return RoundState::Playing(PlayingState {
             deck,
             is_playing,
             history,

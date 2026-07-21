@@ -203,7 +203,7 @@ pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> Pla
                 let (index, _max) = _tmp
                     .iter()
                     .enumerate()
-                    .max_by_key(|(i, c)| c.strength(trump))
+                    .max_by_key(|(_i, c)| c.strength(trump))
                     .expect("Impossible senario again, emptiness check already happend");
                 PlayingRequestResult::TrickWinned(index)
             }
