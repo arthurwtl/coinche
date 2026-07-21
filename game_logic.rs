@@ -118,7 +118,7 @@ pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> Pla
     // the move is legal, so we can't return in the big else block.
     let return_value;
 
-    // You must have the card to play in 
+    // You must have the card to play in
     if !hand.contains(&card) {
         return PlayingRequestResult::Illegal;
     }
@@ -165,13 +165,13 @@ pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> Pla
             if card.strength(trump) > current_max.strength(trump) {
                 return_value = PlayingRequestResult::Legal;
             }
-            // Else it's legal only if I can't play on top 
+            // Else it's legal only if I can't play on top
             else {
                 let my_max_trick = hand
                     .iter()
                     .max_by_key(|c| c.strength(trump))
                     .expect("Impossible senario once again, emptiness check already happend");
-                if my_max_trick < current_max { 
+                if my_max_trick < current_max {
                     return_value = PlayingRequestResult::Legal;
                 } else {
                     return_value = PlayingRequestResult::Illegal;
