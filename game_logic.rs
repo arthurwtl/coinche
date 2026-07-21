@@ -85,14 +85,14 @@ impl Deck {
 /// Contains the rules for a deal. When called on a table and a hand, says if the play was
 /// legal and if someone win the trick by returning an enum
 pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> PlayingRequestResult {
-    // Premier à jouer 
+    // Premier à jouer
     if table.is_empty() {
-        return PlayingRequestResult::Legal
+        return PlayingRequestResult::Legal;
 
     // Tour normal
     } else if table[0].suit != trump {
         if card.suit == table[0].suit {
-           return PlayingRequestResult::Legal;
+            return PlayingRequestResult::Legal;
         } else if table.iter().any(|c: &Card| c.suit == card.suit) {
             return PlayingRequestResult::Illegal;
         } else {
@@ -101,9 +101,8 @@ pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> Pla
 
     // Tour d'atout
     } else {
-       todo!(); 
-    } 
+        todo!();
+    }
 
     // unreachable!();
 }
-
