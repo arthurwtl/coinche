@@ -4,5 +4,5 @@
 
 #![allow(dead_code)]
 
-pub mod game_logic;
+pub mod card_logic;
 pub mod server_logic;

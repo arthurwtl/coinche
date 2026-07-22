@@ -1,6 +1,6 @@
 //! Contains the logic used by the server to update the state of the game.
 
-use super::game_logic::*;
+use super::card_logic::*;
 
 // ======= State definitions =======
 

@@ -1,4 +1,4 @@
-use coinche_logic::game_logic::*;
+use core_logic::card_logic::*;
 // use coinche_logic::server_logic::*;
 
 fn main() {
