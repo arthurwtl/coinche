@@ -5,10 +5,12 @@
 // Add .shuffle trait to slices
 use rand::seq::SliceRandom;
 use std::cmp::Ordering;
+use std::ops::{Index, IndexMut};
+
 
 // ========= Cards and deck definitions ==========
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Suit {
     Spades,
     Diamonds,
@@ -16,7 +18,7 @@ pub enum Suit {
     Clubs,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Card {
     pub rank: u8,
     pub suit: Suit,
@@ -92,10 +94,25 @@ impl Deck {
     pub fn delete_card(&mut self, player: Player, card: Card) {
         let Deck(tab) = self;
         if tab[player].contains(&card) {
-            tab[player].retain(|c| *c == card);
+            println!("carte détectée");
+            tab[player].retain(|c| *c != card);
         } else {
             panic!("Tring to delete a card, but the card dosen't exists");
         }
+    }
+}
+
+impl Index<usize> for Deck {
+    type Output = Vec<Card>;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl IndexMut<usize> for Deck {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 
@@ -214,6 +231,8 @@ pub fn playing_request(table: Table, hand: Hand, trump: Suit, card: Card) -> Pla
 
 #[cfg(test)]
 mod test {
+    use rand::seq::index;
+    use std::collections::HashSet;
     use super::*;
 
     #[test]
@@ -223,5 +242,64 @@ mod test {
         assert!(c1 < c2);
         assert!(!(c2 < c1));
         assert!(c1 == c1);
+    }
+
+
+
+    #[test]
+    fn  random_deck_test() {
+        // Correct partition
+        let deck1 = Deck::random_deck();
+        assert!(deck1.0.len() == 4);
+        for i in 0..=3 {
+            assert!(deck1[i].len() == 8);
+        }
+        // Not twice the same card in a deck
+        let mut seen = HashSet::new();
+        let unicity = deck1.0.iter()
+            .all(|x| seen.insert(x));
+        assert!(unicity);
+        // Not twice the same deck
+        let deck2 = Deck::random_deck();
+        assert!(deck1 != deck2);
+    }
+
+    #[test]
+    fn delete_card_test() {
+        let mut deck = Deck::random_deck();
+        let first_card = deck[0][0];
+        println!("La première carte est : {:?}\n", first_card);
+        println!("{:?}\n len = {}\n", deck, deck.0.len());
+        deck.delete_card(0, first_card);
+        println!("{:?}\n len = {}\n", deck, deck.0.len());
+        assert!(first_card != deck[0][0]);
+        assert!(deck.0[0].len() == 7);
+    }
+
+    #[test]
+    fn strenth_and_master_test() {
+        let trump = Suit::Diamonds;
+        let strong = Card::new(14, trump);
+        let weak = Card::new(7, Suit::Spades);
+        let pretty_strong = Card::new(7, trump);
+        let pretty_weak = Card::new(14, Suit::Spades);
+        assert!(strong.strength(trump) > weak.strength(trump));
+        assert!(pretty_strong.strength(trump) > pretty_weak.strength(trump));
+        assert!(pretty_strong.strength(trump) < strong.strength(trump));
+        assert!(weak.strength(trump) < pretty_weak.strength(trump));
+        println!("{} > {}", strong.strength(trump), weak.strength(trump));
+        println!("{} > {}", pretty_strong.strength(trump), pretty_weak.strength(trump));
+        println!("{} < {}", pretty_strong.strength(trump), strong.strength(trump));
+        println!("{} < {}", strong.strength(trump), pretty_strong.strength(trump));
+
+        let table = vec![strong, pretty_strong, pretty_weak, weak];
+        assert!(master(&table, trump).unwrap() == 0);
+        let table = vec![pretty_strong, pretty_weak, weak, strong];
+        assert!(master(&table, trump).unwrap() == 3);
+    }
+    
+    #[test]
+    fn playing_request_test() {
+
     }
 }
