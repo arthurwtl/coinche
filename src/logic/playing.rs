@@ -1,12 +1,10 @@
 //! This module contains the definitions of everything you need for the playing phase : cards, hands,
-//! table, player, and the rules to play this phase. The server logic dosen't know the cards rules and
-//! obey this module on this point.
+//! table, player, and the rules to play this phase. 
+
 
 // Add .shuffle trait to slices
 use rand::seq::SliceRandom;
 use std::ops::{Index, IndexMut};
-
-use crate::logic::card_logic::Rank::{Ace, Eigth, Jack, King, Nine, Queen, Ten};
 
 // ========= Cards and deck definitions ==========
 

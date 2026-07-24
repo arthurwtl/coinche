@@ -1,6 +1,10 @@
 //! Contains the logic used by the server to update the state of the game.
 
-use super::card_logic::*;
+use super::bidding::*;
+use super::playing::*;
+use super::round::*;
+use super::party::*;
+
 
 // ======= State definitions =======
 
@@ -11,11 +15,6 @@ struct PlayingHistory {
     even: Vec<Trick>,
 }
 
-/// A bid by a player
-struct Bid {
-    suit: Suit,
-    val: u8,
-}
 
 // Current score of the party
 struct Score {
@@ -73,8 +72,8 @@ impl Score {
 
 impl RoundState {
     /// Simply see in which phase we are (among initial, biddin, playing) and call the right method.
-    fn update(state: RoundState, action: PlayerAction) -> RoundState {
-        match (state, action) {
+    fn update(round_state: RoundState, action: PlayerAction) -> RoundState {
+        match (round_state, action) {
             (RoundState::Initial, PlayerAction::Nil) => RoundState::Bidding(BiddingState {
                 deck: Deck::random_deck(),
                 is_bidding: 0,
@@ -91,10 +90,6 @@ impl RoundState {
 impl PlayingState {
     /// Ask the game logic what to do and update the state accordingly.
     fn update(self, player: Player, card: Card) -> RoundState {
-        // Il manque une fonction qui prend une table, mon jeu, et qui me dit si
-        // - J'ai le droit de jouer ContinueToPlay
-        // - Qui remporte le pli Win(player)
-        // - Illegal
 
         // At this position we are shure the play is correct (not implemented) (attention anglais
         // pas tip top)
