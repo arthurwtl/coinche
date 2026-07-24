@@ -449,10 +449,30 @@ mod test {
             Card::new(Eigth, Diamonds),
             Card::new(Seven, Diamonds),
         ];
+        // No trump
         let table = vec![Card::new(Eigth, Spades), Card::new(Jack, Clubs), Card::new(Queen, Spades)];
         assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(2) );
         let table = vec![Card::new(Eigth, Spades), Card::new(Jack, Clubs), Card::new(Seven, Spades)];
-        println!("{:?}", playing_request(&table, &hand, trump, hand[1]));
         assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(3));
+        // Trump
+        let table = vec![Card::new(Eigth, Spades), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(1));
+        let table = vec![Card::new(Eigth, Hearts), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        assert!(playing_request(&table, &hand, trump, hand[0]) == TrickWinned(3));
+        let table = vec![Card::new(Eigth, Hearts), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        let hand = vec![
+            Card::new(Ten, Diamonds),
+            Card::new(Nine, Spades),
+            Card::new(Eigth, Diamonds),
+            Card::new(Seven, Diamonds),
+        ];
+        // 1 is my partner
+        assert!(playing_request(&table, &hand, trump, hand[0]) == TrickWinned(1));
+        assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(1));
+
+        // 2 is not my partner
+        let table = vec![Card::new(Eigth, Hearts), Card::new(Seven, Spades), Card::new(Nine, Diamonds)];
+        assert!(playing_request(&table, &hand, trump, hand[0]) == TrickWinned(2));
+        assert!(playing_request(&table, &hand, trump, hand[1]) == Illegal);
     }
 }
