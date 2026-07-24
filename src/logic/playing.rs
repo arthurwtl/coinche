@@ -58,6 +58,11 @@ pub enum PlayingRequestResult {
     TrickWinned(usize),
 }
 
+/// A bid by a player
+pub struct Bid {
+    pub suit: Suit,
+    pub val: u32,
+}
 // ------------------ Impl -------------------
 
 impl Card {

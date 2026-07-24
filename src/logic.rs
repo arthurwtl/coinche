@@ -4,8 +4,6 @@
 
 #![allow(dead_code)]
 
-pub mod bidding;
 pub mod client_logic;
 pub mod party;
 pub mod playing;
-pub mod round;
