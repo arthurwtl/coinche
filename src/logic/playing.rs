@@ -110,13 +110,12 @@ impl Deck {
         let mut rng = rand::rng();
         let mut tab = [Spades, Diamonds, Hearts, Clubs]
             .into_iter()
-            .map(|s| {
+            .flat_map(|s| {
                 vec![Seven, Eigth, Nine, Ten, Jack, King, Queen, Ace]
                     .into_iter()
                     .map(|r| Card::new(r, s))
                     .collect::<Vec<Card>>()
             })
-            .flatten()
             .collect::<Vec<Card>>();
         tab.shuffle(&mut rng);
         // here tab is a flat shuffled set of all the cards.
@@ -124,7 +123,7 @@ impl Deck {
             .chunks_exact(8)
             .map(|chunk| chunk.to_vec())
             .collect::<Vec<Vec<Card>>>();
-        return Deck(tab);
+        Deck(tab)
     }
 
     /// Deleate a card when called on a deck, and given a player and a card.
@@ -220,7 +219,7 @@ pub fn playing_request(
                 return_value = PlayingRequestResult::Legal;
             }
             // Else if my partner is winning the trick it's still legal.
-            else if table.len() >= 2 && master(&table, trump) == table.len() - 2 {
+            else if table.len() >= 2 && master(table, trump) == table.len() - 2 {
                 println!("Else if my partner is winning the trick it's still legal.");
                 return_value = PlayingRequestResult::Legal;
             }
@@ -274,9 +273,9 @@ pub fn playing_request(
 
     // About to play the fourth card
     if table.len() != 3 {
-        return return_value;
+        return_value
     } else {
-        return match return_value {
+        match return_value {
             PlayingRequestResult::Illegal => PlayingRequestResult::Illegal,
             PlayingRequestResult::Legal => {
                 let mut _tmp = table.clone();
@@ -292,7 +291,7 @@ pub fn playing_request(
                 PlayingRequestResult::TrickWinned(index)
             }
             _ => unreachable!(),
-        };
+        }
     }
 }
 
@@ -300,8 +299,8 @@ pub fn playing_request(
 mod test {
     // use rand::seq::index;
     use super::*;
-    use crate::logic::card_logic::PlayingRequestResult::*;
     use std::collections::HashSet;
+    use PlayingRequestResult::*;
 
     #[test]
     fn card_ordering_test() {

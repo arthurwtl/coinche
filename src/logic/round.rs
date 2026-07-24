@@ -75,8 +75,8 @@ impl PlayingState {
         //
         // Code à réorganiser avec un match sur le resultat de l'appel à la logique du jeu
         let mut deck;
-        let mut is_playing;
-        let mut history;
+        let is_playing;
+        let history;
         let mut table: Vec<_>;
         let trump = self.trump;
 
@@ -94,16 +94,17 @@ impl PlayingState {
             history = self.history;
             table = self.table;
             table.push(card);
+            todo!();
         } else {
             panic!("wtf not possible in table.len() matching")
         }
 
-        return RoundState::Playing(PlayingState {
+        RoundState::Playing(PlayingState {
             deck,
             is_playing,
             history,
             table,
             trump,
-        });
+        })
     }
 }
