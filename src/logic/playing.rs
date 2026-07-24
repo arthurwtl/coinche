@@ -1,6 +1,5 @@
 //! This module contains the definitions of everything you need for the playing phase : cards, hands,
-//! table, player, and the rules to play this phase. 
-
+//! table, player, and the rules to play this phase.
 
 // Add .shuffle trait to slices
 use rand::seq::SliceRandom;
@@ -99,7 +98,9 @@ impl Card {
             self.trump_strenght()
         } else if self.suit == asked {
             self.normal_strenght()
-        } else { 0 }
+        } else {
+            0
+        }
     }
 }
 
@@ -157,7 +158,7 @@ impl IndexMut<usize> for Deck {
 
 /// Examine a table and return the index of the card currently winning
 ///
-/// # Requirement 
+/// # Requirement
 /// the table must not be empty
 fn master(table: &Table, trump: Suit) -> usize {
     table
@@ -170,7 +171,12 @@ fn master(table: &Table, trump: Suit) -> usize {
 
 /// Contains the rules for a deal. When called on a table and a hand, says if the play was
 /// legal and if someone win the trick by returning an enum.
-pub fn playing_request(table: &Table, hand: &Hand, trump: Suit, card: Card) -> PlayingRequestResult {
+pub fn playing_request(
+    table: &Table,
+    hand: &Hand,
+    trump: Suit,
+    card: Card,
+) -> PlayingRequestResult {
     // The difference between last to play and second and third is made after determinating weather
     // the move is legal, so we can't return in the big else block.
     let return_value;
@@ -196,7 +202,11 @@ pub fn playing_request(table: &Table, hand: &Hand, trump: Suit, card: Card) -> P
             return_value = PlayingRequestResult::Legal;
         }
         // But illegal to play a different color if I can play what's asked
-        else if hand.iter().inspect(|c| println!("     {:?} ?= {:?}", c.suit, table[0].suit)).any(|c: &Card| c.suit == table[0].suit) {
+        else if hand
+            .iter()
+            .inspect(|c| println!("     {:?} ?= {:?}", c.suit, table[0].suit))
+            .any(|c: &Card| c.suit == table[0].suit)
+        {
             println!("But illegal to play a different color if I can play what's asked");
             println!("asked : {:?}, you have some of that", table[0].suit);
             return_value = PlayingRequestResult::Illegal;
@@ -210,7 +220,7 @@ pub fn playing_request(table: &Table, hand: &Hand, trump: Suit, card: Card) -> P
                 return_value = PlayingRequestResult::Legal;
             }
             // Else if my partner is winning the trick it's still legal.
-            else if table.len() >= 2 && master(&table, trump) == table.len() - 2  {
+            else if table.len() >= 2 && master(&table, trump) == table.len() - 2 {
                 println!("Else if my partner is winning the trick it's still legal.");
                 return_value = PlayingRequestResult::Legal;
             }
@@ -274,7 +284,9 @@ pub fn playing_request(table: &Table, hand: &Hand, trump: Suit, card: Card) -> P
                 let (index, _max) = _tmp
                     .iter()
                     .enumerate()
-                    .inspect(|truc| println!("    {truc:?}, {}", truc.1.strength(trump, table[0].suit)))
+                    .inspect(|truc| {
+                        println!("    {truc:?}, {}", truc.1.strength(trump, table[0].suit))
+                    })
                     .max_by_key(|(_i, c)| c.strength(trump, table[0].suit))
                     .expect("Impossible senario again, emptiness check already happend");
                 PlayingRequestResult::TrickWinned(index)
@@ -287,9 +299,9 @@ pub fn playing_request(table: &Table, hand: &Hand, trump: Suit, card: Card) -> P
 #[cfg(test)]
 mod test {
     // use rand::seq::index;
-    use std::{collections::HashSet};
-    use crate::logic::card_logic::PlayingRequestResult::*;
     use super::*;
+    use crate::logic::card_logic::PlayingRequestResult::*;
+    use std::collections::HashSet;
 
     #[test]
     fn card_ordering_test() {
@@ -342,7 +354,11 @@ mod test {
         assert!(pretty_strong.strength(trump, asked) > pretty_weak.strength(trump, asked));
         assert!(pretty_strong.strength(trump, asked) < strong.strength(trump, asked));
         assert!(weak.strength(trump, asked) < pretty_weak.strength(trump, asked));
-        println!("{} > {}", strong.strength(trump, asked), weak.strength(trump, asked));
+        println!(
+            "{} > {}",
+            strong.strength(trump, asked),
+            weak.strength(trump, asked)
+        );
         println!(
             "{} > {}",
             pretty_strong.strength(trump, asked),
@@ -448,16 +464,36 @@ mod test {
             Card::new(Seven, Diamonds),
         ];
         // No trump
-        let table = vec![Card::new(Eigth, Spades), Card::new(Jack, Clubs), Card::new(Queen, Spades)];
-        assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(2) );
-        let table = vec![Card::new(Eigth, Spades), Card::new(Jack, Clubs), Card::new(Seven, Spades)];
+        let table = vec![
+            Card::new(Eigth, Spades),
+            Card::new(Jack, Clubs),
+            Card::new(Queen, Spades),
+        ];
+        assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(2));
+        let table = vec![
+            Card::new(Eigth, Spades),
+            Card::new(Jack, Clubs),
+            Card::new(Seven, Spades),
+        ];
         assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(3));
         // Trump
-        let table = vec![Card::new(Eigth, Spades), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        let table = vec![
+            Card::new(Eigth, Spades),
+            Card::new(Nine, Diamonds),
+            Card::new(Seven, Spades),
+        ];
         assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(1));
-        let table = vec![Card::new(Eigth, Hearts), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        let table = vec![
+            Card::new(Eigth, Hearts),
+            Card::new(Nine, Diamonds),
+            Card::new(Seven, Spades),
+        ];
         assert!(playing_request(&table, &hand, trump, hand[0]) == TrickWinned(3));
-        let table = vec![Card::new(Eigth, Hearts), Card::new(Nine, Diamonds), Card::new(Seven, Spades)];
+        let table = vec![
+            Card::new(Eigth, Hearts),
+            Card::new(Nine, Diamonds),
+            Card::new(Seven, Spades),
+        ];
         let hand = vec![
             Card::new(Ten, Diamonds),
             Card::new(Nine, Spades),
@@ -469,7 +505,11 @@ mod test {
         assert!(playing_request(&table, &hand, trump, hand[1]) == TrickWinned(1));
 
         // 2 is not my partner
-        let table = vec![Card::new(Eigth, Hearts), Card::new(Seven, Spades), Card::new(Nine, Diamonds)];
+        let table = vec![
+            Card::new(Eigth, Hearts),
+            Card::new(Seven, Spades),
+            Card::new(Nine, Diamonds),
+        ];
         assert!(playing_request(&table, &hand, trump, hand[0]) == TrickWinned(2));
         assert!(playing_request(&table, &hand, trump, hand[1]) == Illegal);
     }

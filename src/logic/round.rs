@@ -1,7 +1,5 @@
-use super::playing::*;
 use super::bidding::*;
-
-
+use super::playing::*;
 
 /// All the logic for a single round.
 enum RoundState {
@@ -52,13 +50,6 @@ impl PlayingHistory {
     }
 }
 
-
-impl Score {
-    fn new() -> Self {
-        Score { odd: 0, even: 0 }
-    }
-}
-
 impl RoundState {
     /// Simply see in which phase we are (among initial, biddin, playing) and call the right method.
     fn update(round_state: RoundState, action: PlayerAction) -> RoundState {
@@ -79,7 +70,6 @@ impl RoundState {
 impl PlayingState {
     /// Ask the game logic what to do and update the state accordingly.
     fn update(self, player: Player, card: Card) -> RoundState {
-
         // At this position we are shure the play is correct (not implemented) (attention anglais
         // pas tip top)
         //
