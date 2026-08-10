@@ -3,7 +3,8 @@
 
 // Add .shuffle trait to slices
 use rand::seq::SliceRandom;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Deref};
+
 
 // ========= Cards and deck definitions ==========
 
@@ -135,11 +136,12 @@ impl Deck {
     ///
     /// # Panic
     /// If the card is not in the player's hand.
-    pub fn delete_card(&mut self, player: Player, card: Card) {
-        let Deck(tab) = self;
+    pub fn delete_card(self, player: Player, card: Card) -> Self {
+        let Deck(mut tab) = self;
         if tab[player].contains(&card) {
             println!("carte détectée");
             tab[player].retain(|c| *c != card);
+            Deck(tab)
         } else {
             panic!("Tring to delete a card, but the card dosen't exists");
         }
@@ -157,6 +159,14 @@ impl Index<usize> for Deck {
 impl IndexMut<usize> for Deck {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.0[index]
+    }
+}
+
+impl Deref for Deck {
+    type Target = Vec<Vec<Card>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -304,8 +314,8 @@ pub fn playing_request(
 mod test {
     // use rand::seq::index;
     use super::*;
-    use std::collections::HashSet;
     use PlayingRequestResult::*;
+    use std::collections::HashSet;
 
     #[test]
     fn card_ordering_test() {
@@ -335,11 +345,11 @@ mod test {
 
     #[test]
     fn delete_card_test() {
-        let mut deck = Deck::random_deck();
+        let deck = Deck::random_deck();
         let first_card = deck[0][0];
         println!("La première carte est : {:?}\n", first_card);
         println!("{:?}\n len = {}\n", deck, deck.0.len());
-        deck.delete_card(0, first_card);
+        let deck = deck.delete_card(0, first_card);
         println!("{:?}\n len = {}\n", deck, deck.0.len());
         assert!(first_card != deck[0][0]);
         assert!(deck.0[0].len() == 7);

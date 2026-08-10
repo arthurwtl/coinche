@@ -2,16 +2,17 @@ use super::playing::*;
 
 /// All the logic for a single round.
 enum RoundState {
-    Initial,
-    Over,
-    Playing(PlayingState),
     Bidding(BiddingState),
+    // StartingPlayingPhase(Player),
+    Playing(PlayingState),
+    Over,
 }
 
 /// If we are in the play phase, the round is described by this struct.
 struct PlayingState {
     deck: Deck,
     is_playing: Player,
+    first_player: Player,
     history: PlayingHistory,
     table: Vec<Card>,
     trump: Suit,
@@ -22,6 +23,12 @@ struct BiddingState {
     deck: Deck,
     is_bidding: Player,
     bidding_history: Vec<Bid>,
+    first_player: Player,
+}
+
+enum Team {
+    Odd,
+    Even,
 }
 
 /// Contains the history on the current round by listing the triks won by
@@ -33,12 +40,23 @@ struct PlayingHistory {
 
 /// A player can play or bid, (pass is None)
 enum PlayerAction {
-    Nil,
     PlayCard { player: Player, card: Card },
-    Bid { player: Player, bid: Option<Bid> },
+    AnounceBid { player: Player, bid: Option<Bid> },
 }
 
-// ------------- Impl --------------
+// Current score of the party
+struct Score {
+    odd: u8,
+    even: u8,
+}
+
+impl Score {
+    fn new() -> Self {
+        Score { odd: 0, even: 0 }
+    }
+}
+
+// ------------ Impl --------------
 
 impl PlayingHistory {
     fn new() -> Self {
@@ -50,74 +68,75 @@ impl PlayingHistory {
 }
 
 impl RoundState {
-    /// Simply see in which phase we are (among initial, biddin, playing) and call the right method.
+    fn new(first_player: Player) -> Self {
+        RoundState::Bidding(BiddingState {
+            deck: Deck::random_deck(),
+            is_bidding: first_player,
+            first_player: first_player,
+            bidding_history: vec![],
+        })
+    }
+
+    /// Simply see in which phase we are (among initial, bidding, playing) and call the right method.
     fn update(round_state: RoundState, action: PlayerAction) -> RoundState {
         match (round_state, action) {
-            (RoundState::Initial, PlayerAction::Nil) => RoundState::Bidding(BiddingState {
-                deck: Deck::random_deck(),
-                is_bidding: 0,
-                bidding_history: vec![],
-            }),
+            (RoundState::Bidding(bidding_state), PlayerAction::AnounceBid { player, bid }) => {
+                bidding_state.update(player, bid.unwrap())
+            }
             (RoundState::Playing(playing_state), PlayerAction::PlayCard { player, card }) => {
                 playing_state.update(player, card)
             }
-            _ => todo!(),
+            _ => panic!("Illegal action in roundstate.update()"),
         }
+    }
+}
+
+impl BiddingState {
+    fn update(self, player: Player, bid: Bid) -> RoundState {
+        todo!();
     }
 }
 
 impl PlayingState {
-    /// Ask the game logic what to do and update the state accordingly.
     fn update(self, player: Player, card: Card) -> RoundState {
-        // At this position we are shure the play is correct (not implemented) (attention anglais
-        // pas tip top)
-        //
-        // Code à réorganiser avec un match sur le resultat de l'appel à la logique du jeu
-        let mut deck;
-        let is_playing;
-        let history;
-        let mut table: Vec<_>;
-        let trump = self.trump;
+        assert!(
+            player == self.is_playing,
+            "Player tries to play, but not his turn."
+        );
+        let res = playing_request(&self.table, &self.deck[player], self.trump, card);
 
-        if self.table.len() < 3 {
-            deck = self.deck;
-            deck.delete_card(player, card);
-            is_playing = (player + 1) % 4;
-            history = self.history;
-            table = self.table;
-            table.push(card);
-        } else if self.table.len() == 3 {
-            deck = self.deck;
-            deck.delete_card(player, card);
-            is_playing = (player + 1) % 4;
-            history = self.history;
-            table = self.table;
-            table.push(card);
-            todo!();
-        } else {
-            panic!("wtf not possible in table.len() matching")
+        match res {
+            PlayingRequestResult::Legal => RoundState::Playing(PlayingState {
+                deck: self.deck.delete_card(player, card),
+                is_playing: (self.is_playing + 1) % 4,
+                table: {
+                    let mut tmp = self.table;
+                    tmp.push(card);
+                    tmp
+                },
+                trump: self.trump,
+                first_player : self.first_player,
+                history: self.history,
+            }),
+            PlayingRequestResult::TrickWinned(winner) => {
+                if self.deck.iter().flatten().count() == 1 {
+                    RoundState::Over
+                } else {
+                    RoundState::Playing(PlayingState {
+                        deck: self.deck.delete_card(player, card),
+                        first_player: (self.first_player + 1) % 4,
+                        is_playing: (self.first_player + 1) % 4, // is_playing: (self.first_player + 1) % 4
+                        table: {
+                            let mut tmp = self.table;
+                            tmp.push(card);
+                            tmp
+                        },
+                        trump: self.trump,
+                        history: self.history,
+                    })
+                }
+            }
+            PlayingRequestResult::Illegal => panic!("requested illegal move"),
         }
-
-        RoundState::Playing(PlayingState {
-            deck,
-            is_playing,
-            history,
-            table,
-            trump,
-        })
-    }
-}
-
-// ============ Party ============ 
-
-// Current score of the party
-struct Score {
-    odd: u8,
-    even: u8,
-}
-
-impl Score {
-    fn new() -> Self {
-        Score { odd: 0, even: 0 }
     }
 }
