@@ -1,3 +1,5 @@
+use core::panic;
+
 use super::playing::*;
 
 /// All the logic for a single round.
@@ -92,8 +94,35 @@ impl RoundState {
 }
 
 impl BiddingState {
-    fn update(self, player: Player, bid: Bid) -> RoundState {
-        todo!();
+    fn update(mut self, player: Player, bid: Bid) -> RoundState {
+        assert!(
+            player == self.is_bidding,
+            "Player tries to bid, but not his turn."
+        );
+        let res = bidding_request(&self.bidding_history, bid);
+
+        match res {
+            BiddingRequestResult::Illegal => panic!("Bidding illegal"),
+
+            BiddingRequestResult::Abortion => RoundState::new((self.first_player + 1 ) % 4),
+
+            BiddingRequestResult::Legal => {
+                self.bidding_history.push(bid);
+                RoundState::Bidding(BiddingState {
+                    is_bidding: (self.is_bidding + 1) % 4,
+                    ..self
+                })
+            }
+
+            BiddingRequestResult::BiddingWinned(index_winner) => RoundState::Playing(PlayingState {
+                deck: self.deck,
+                is_playing: self.first_player,
+                first_player: self.first_player,
+                history: PlayingHistory::new(),
+                table: vec![],
+                trump: {if let Bid::Value(s, _r) = self.bidding_history[index_winner] {s} else { panic!() }}
+            }),
+        }
     }
 }
 
@@ -115,7 +144,7 @@ impl PlayingState {
                     tmp
                 },
                 trump: self.trump,
-                first_player : self.first_player,
+                first_player: self.first_player,
                 history: self.history,
             }),
             PlayingRequestResult::TrickWinned(winner) => {
@@ -125,7 +154,7 @@ impl PlayingState {
                     RoundState::Playing(PlayingState {
                         deck: self.deck.delete_card(player, card),
                         first_player: (self.first_player + 1) % 4,
-                        is_playing: (self.first_player + 1) % 4, // is_playing: (self.first_player + 1) % 4
+                        is_playing: (self.first_player + 1) % 4,
                         table: {
                             let mut tmp = self.table;
                             tmp.push(card);

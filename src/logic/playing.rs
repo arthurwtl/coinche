@@ -59,11 +59,24 @@ pub enum PlayingRequestResult {
     TrickWinned(usize),
 }
 
-/// A bid by a player
-pub struct Bid {
-    pub suit: Suit,
-    pub val: u32,
+/// See [`bidding_request`], the only fontion returning this output.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum BiddingRequestResult {
+    Legal,
+    Illegal,
+    Abortion,
+    BiddingWinned(usize),
 }
+
+/// A bid by a player
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Bid {
+    Value(Suit, u32),
+    Pass, 
+}
+
+use Bid::*;
+
 // ------------------ Impl -------------------
 
 impl Card {
@@ -106,6 +119,15 @@ impl Card {
             self.normal_strenght()
         } else {
             0
+        }
+    }
+}
+
+impl Bid {
+    fn strength(self) -> u32 {
+        match self {
+            Pass => 0,
+            Value(_, v) => v,
         }
     }
 }
@@ -181,6 +203,40 @@ fn master(table: &Table, trump: Suit) -> usize {
         .max_by_key(|(_i, c)| c.strength(trump, table[0].suit))
         .unwrap()
         .0
+}
+
+// MANQUE LE CAS OU TOUT LE MONDE PASSE au premier tour
+pub fn bidding_request(bidding_history: &Vec<Bid>, bid: Bid) -> BiddingRequestResult{
+    let l = bidding_history.len();
+    match bid {
+        Pass if l == 3  
+        && bidding_history[l-1] == Pass
+        && bidding_history[l-2] == Pass
+        && bidding_history[l-3] == Pass
+        => BiddingRequestResult::Abortion,
+
+        Pass if l > 3  
+        && bidding_history[l-1] == Pass
+        && bidding_history[l-2] == Pass
+        && bidding_history[l-3] == Pass
+        => {
+            let (index_of_strongest_bid, _) = bidding_history.iter()
+                .enumerate()
+                .max_by_key(|(_,b)| b.strength()).unwrap();
+            return BiddingRequestResult::BiddingWinned(index_of_strongest_bid);
+        },
+
+        Pass => BiddingRequestResult::Legal,
+
+        Value(_s,v) if l > 0 
+        && v > bidding_history[l-1].strength()
+        && v % 10 == 0 
+        => BiddingRequestResult::Legal,
+
+        Value(_s,v) if v % 10 == 0 => BiddingRequestResult::Legal,
+
+        _ => BiddingRequestResult::Illegal,
+    }
 }
 
 /// Contains the rules for a deal. When called on a table and a hand, says if the play was
