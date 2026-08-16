@@ -104,7 +104,7 @@ impl BiddingState {
         match res {
             BiddingRequestResult::Illegal => panic!("Bidding illegal"),
 
-            BiddingRequestResult::Abortion => RoundState::new((self.first_player + 1 ) % 4),
+            BiddingRequestResult::Abortion => RoundState::new((self.first_player + 1) % 4),
 
             BiddingRequestResult::Legal => {
                 self.bidding_history.push(bid);
@@ -114,14 +114,22 @@ impl BiddingState {
                 })
             }
 
-            BiddingRequestResult::BiddingWinned(index_winner) => RoundState::Playing(PlayingState {
-                deck: self.deck,
-                is_playing: self.first_player,
-                first_player: self.first_player,
-                history: PlayingHistory::new(),
-                table: vec![],
-                trump: {if let Bid::Value(s, _r) = self.bidding_history[index_winner] {s} else { panic!() }}
-            }),
+            BiddingRequestResult::BiddingWinned(index_winner) => {
+                RoundState::Playing(PlayingState {
+                    deck: self.deck,
+                    is_playing: self.first_player,
+                    first_player: self.first_player,
+                    history: PlayingHistory::new(),
+                    table: vec![],
+                    trump: {
+                        if let Bid::Value(s, _r) = self.bidding_history[index_winner] {
+                            s
+                        } else {
+                            panic!()
+                        }
+                    },
+                })
+            }
         }
     }
 }
