@@ -39,7 +39,8 @@ pub struct Card {
 }
 
 /// Tricks are made of four cards.
-pub type Trick = [Card; 4];
+// pub type Trick = [Card; 4];
+pub type Trick = Vec<Card>;
 
 pub type Hand = Vec<Card>;
 
@@ -229,11 +230,14 @@ pub fn bidding_request(bidding_history: &Vec<Bid>, bid: Bid) -> BiddingRequestRe
         Pass => BiddingRequestResult::Legal,
 
         Value(_s,v) if l > 0 
-        && v > bidding_history[l-1].strength()
+        && v > bidding_history.iter().map(|b| b.strength()).max().unwrap()
         && v % 10 == 0 
         => BiddingRequestResult::Legal,
 
-        Value(_s,v) if v % 10 == 0 => BiddingRequestResult::Legal,
+        Value(_s,v) if v % 10 == 0
+        && v >= 80
+        && v < 180
+        => BiddingRequestResult::Legal,
 
         _ => BiddingRequestResult::Illegal,
     }

@@ -3,6 +3,7 @@ use core::panic;
 use super::playing::*;
 
 /// All the logic for a single round.
+#[derive(Debug)]
 enum RoundState {
     Bidding(BiddingState),
     // StartingPlayingPhase(Player),
@@ -11,6 +12,7 @@ enum RoundState {
 }
 
 /// If we are in the play phase, the round is described by this struct.
+#[derive(Debug)]
 struct PlayingState {
     deck: Deck,
     is_playing: Player,
@@ -18,9 +20,12 @@ struct PlayingState {
     history: PlayingHistory,
     table: Vec<Card>,
     trump: Suit,
+    // contrat: Bid,
+    
 }
 
 /// If we are in the bidding phase, the round is described by this struct.
+#[derive(Debug)]
 struct BiddingState {
     deck: Deck,
     is_bidding: Player,
@@ -35,15 +40,17 @@ enum Team {
 
 /// Contains the history on the current round by listing the triks won by
 /// Odd and Even, the two opposed teams.
-struct PlayingHistory {
-    odd: Vec<Trick>,
-    even: Vec<Trick>,
-}
+// struct PlayingHistory {
+//     odd: Vec<Trick>,
+//     even: Vec<Trick>,
+// }
+
+type PlayingHistory = [Vec<Trick>; 2];
 
 /// A player can play or bid, (pass is None)
 enum PlayerAction {
     PlayCard { player: Player, card: Card },
-    AnounceBid { player: Player, bid: Option<Bid> },
+    AnounceBid { player: Player, bid: Bid },
 }
 
 // Current score of the party
@@ -60,14 +67,14 @@ impl Score {
 
 // ------------ Impl --------------
 
-impl PlayingHistory {
-    fn new() -> Self {
-        Self {
-            odd: vec![],
-            even: vec![],
-        }
-    }
-}
+// impl PlayingHistory {
+//     fn new() -> Self {
+//         Self {
+//             odd: vec![],
+//             even: vec![],
+//         }
+//     }
+// }
 
 impl RoundState {
     fn new(first_player: Player) -> Self {
@@ -79,11 +86,11 @@ impl RoundState {
         })
     }
 
-    /// Simply see in which phase we are (among initial, bidding, playing) and call the right method.
-    fn update(round_state: RoundState, action: PlayerAction) -> RoundState {
-        match (round_state, action) {
+    /// Dispatch update on the right method.
+    fn update(self, action: PlayerAction) -> RoundState {
+        match (self, action) {
             (RoundState::Bidding(bidding_state), PlayerAction::AnounceBid { player, bid }) => {
-                bidding_state.update(player, bid.unwrap())
+                bidding_state.update(player, bid)
             }
             (RoundState::Playing(playing_state), PlayerAction::PlayCard { player, card }) => {
                 playing_state.update(player, card)
@@ -119,7 +126,8 @@ impl BiddingState {
                     deck: self.deck,
                     is_playing: self.first_player,
                     first_player: self.first_player,
-                    history: PlayingHistory::new(),
+                    // history: PlayingHistory::new(),
+                    history: [vec![], vec![]],
                     table: vec![],
                     trump: {
                         if let Bid::Value(s, _r) = self.bidding_history[index_winner] {
@@ -155,25 +163,101 @@ impl PlayingState {
                 first_player: self.first_player,
                 history: self.history,
             }),
+
             PlayingRequestResult::TrickWinned(winner) => {
                 if self.deck.iter().flatten().count() == 1 {
                     RoundState::Over
                 } else {
                     RoundState::Playing(PlayingState {
                         deck: self.deck.delete_card(player, card),
-                        first_player: (self.first_player + 1) % 4,
-                        is_playing: (self.first_player + 1) % 4,
-                        table: {
-                            let mut tmp = self.table;
-                            tmp.push(card);
-                            tmp
+                        is_playing: winner,
+                        table: vec![],
+                        history: {
+                            let mut tmp_history = self.history;
+                            let mut tmp_table = self.table;
+                            tmp_table.push(card);
+                            tmp_history[winner % 2].push(tmp_table);
+                            tmp_history
                         },
-                        trump: self.trump,
-                        history: self.history,
+                        ..self
                     })
                 }
             }
             PlayingRequestResult::Illegal => panic!("requested illegal move"),
         }
+    }
+}
+
+
+//yes these test have no assert but at least they don't panic
+#[cfg(test)]
+mod round_tests {
+    use crate::logic::*;
+
+    use super::*;
+
+    #[test]
+    fn test_bidding_order() {
+        let mut round_state = RoundState::new(0);
+        println!("{:#?}", round_state);
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 0,
+            bid: Bid::Pass,
+        });
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 1,
+            bid: Bid::Pass,
+        });
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 2,
+            bid: Bid::Pass,
+        });
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 3,
+            bid: Bid::Pass,
+        });
+        // round_state = round_state.update(PlayerAction::AnounceBid { player: 2, bid: Bid::Pass });
+        // round_state = round_state.update(PlayerAction::AnounceBid { player: 3, bid: Bid::Pass });
+        println!("{:#?}", round_state);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bidding_order_2() {
+        let mut round_state = RoundState::new(0);
+        println!("{:#?}", round_state);
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 0,
+            bid: Bid::Pass,
+        });
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 0,
+            bid: Bid::Pass,
+        });
+        println!("{:#?}", round_state);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bidding_1() {
+        let mut round_state = RoundState::new(0);
+        println!("{:#?}", round_state);
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 0,
+            bid: Bid::Value(Suit::Hearts, 81),
+        });
+        println!("{:#?}", round_state);
+    }
+    
+    #[test]
+    #[should_panic]
+    fn test_bidding_2() {
+        let mut round_state = RoundState::new(0);
+        println!("{:#?}", round_state);
+        round_state = round_state.update(PlayerAction::AnounceBid {
+            player: 0,
+            bid: Bid::Value(Suit::Hearts, 70),
+        });
+        println!("{:#?}", round_state);
     }
 }
