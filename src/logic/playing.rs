@@ -74,6 +74,7 @@ pub enum BiddingRequestResult {
 pub enum Bid {
     Value(Suit, u32),
     Pass, 
+    Capot, 
 }
 
 use Bid::*;
@@ -232,11 +233,12 @@ pub fn bidding_request(bidding_history: &Vec<Bid>, bid: Bid) -> BiddingRequestRe
         Value(_s,v) if l > 0 
         && v > bidding_history.iter().map(|b| b.strength()).max().unwrap()
         && v % 10 == 0 
+        && v <= 180
         => BiddingRequestResult::Legal,
 
         Value(_s,v) if v % 10 == 0
         && v >= 80
-        && v < 180
+        && v <= 180
         => BiddingRequestResult::Legal,
 
         _ => BiddingRequestResult::Illegal,
